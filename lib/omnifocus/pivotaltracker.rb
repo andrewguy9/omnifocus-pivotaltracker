@@ -35,8 +35,12 @@ module OmniFocus::Pivotaltracker
     projects = fetch_projects(token)
 
     projects.each do |project|
+      dates = fetch_iterations(token, project["id"])
+        .map{|iter| ticket_dates iter}
+        .reduce({}) { |memo, obj| memo.merge obj}
       fetch_stories(token, project["id"], user_name).each do |story|
-        process_story(project, story)
+        defer, due = dates[story["id"]]
+        process_story(project, story, defer, due)
       end
     end
   rescue OpenURI::HTTPError => error
@@ -44,7 +48,8 @@ module OmniFocus::Pivotaltracker
   end
 
   def fetch_projects(token)
-    JSON.parse(open("https://www.pivotaltracker.com/services/v5/projects", "X-TrackerToken" => token).read)
+    url = "https://www.pivotaltracker.com/services/v5/projects"
+    JSON.parse(open(url, "X-TrackerToken" => token).read)
   end
 
   def fetch_stories(token, project_id, user_name)
@@ -55,7 +60,20 @@ module OmniFocus::Pivotaltracker
     JSON.parse(open(url, "X-TrackerToken" => token).read)
   end
 
-  def process_story(project, story)
+  def fetch_iterations(token, project_id)
+    url = "https://www.pivotaltracker.com/services/v5/projects/#{project_id}/iterations"
+
+    JSON.parse(open(url, "X-TrackerToken" => token).read)
+  end
+
+  def ticket_dates(iteration)
+    defer = iteration["start"]
+    finish = iteration["finish"]
+    keys = iteration["stories"].map{|story| [story["id"], [defer, finish]]}.flatten(1)
+    Hash[*keys]
+  end
+
+  def process_story(project, story, defer, due)
     number       = story["id"]
     url          = story["url"]
     project_name = project["name"]
