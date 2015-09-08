@@ -12,7 +12,7 @@ module OmniFocus::Pivotaltracker
     config = YAML.load(File.read(path)) rescue nil
 
     unless config then
-      config = { :token => "TOKEN, get yours from https://www.pivotaltracker.com/profile", :user_name => "Full name, initials or unique part of the user's name" }
+      config = { :token => "TOKEN, get yours from https://www.pivotaltracker.com/profile", :user_name => "Full name, initials or unique part of the user's name", :points => {1=>"Number of minutes to complete 1 point task"} }
 
       File.open(path, "w") { |f|
         YAML.dump(config, f)
@@ -28,11 +28,11 @@ module OmniFocus::Pivotaltracker
   def populate_pivotaltracker_tasks
     config    = load_or_create_config
     config.each do |conf|
-      populate_pivotaltracker_tasks_for_project(conf[:token], conf[:user_name])
+      populate_pivotaltracker_tasks_for_project(conf[:token], conf[:user_name], conf[:points])
     end
   end
 
-  def populate_pivotaltracker_tasks_for_project(token, user_name)
+  def populate_pivotaltracker_tasks_for_project(token, user_name, points)
     projects = fetch_projects(token)
 
     projects.each do |project|
@@ -41,7 +41,8 @@ module OmniFocus::Pivotaltracker
         .reduce({}) { |memo, obj| memo.merge obj}
       fetch_stories(token, project["id"], user_name).each do |story|
         defer, due = dates[story["id"]]
-        process_story(project, story, defer, due)
+        estimated_minutes = points[story["estimate"]]
+        process_story(project, story, defer, due, estimated_minutes)
       end
     end
   rescue OpenURI::HTTPError => error
@@ -86,6 +87,6 @@ module OmniFocus::Pivotaltracker
       return
     end
 
-    bug_db[project_name][ticket_id] = {:title=>title, :note=>url, :defer_date=>defer, :due_date=>due}
+    bug_db[project_name][ticket_id] = {:title=>title, :note=>url, :defer_date=>defer, :due_date=>due, :estimated_minutes=>estimated_minutes}
   end
 end
