@@ -2,6 +2,7 @@ require "open-uri"
 require "json"
 require "yaml"
 require "cgi"
+require 'time.rb'
 
 module OmniFocus::Pivotaltracker
   PREFIX  = "PT"
@@ -67,8 +68,8 @@ module OmniFocus::Pivotaltracker
   end
 
   def ticket_dates(iteration)
-    defer = iteration["start"]
-    finish = iteration["finish"]
+    defer = Time.parse(iteration["start"])
+    finish = Time.parse(iteration["finish"])
     keys = iteration["stories"].map{|story| [story["id"], [defer, finish]]}.flatten(1)
     Hash[*keys]
   end
@@ -85,6 +86,6 @@ module OmniFocus::Pivotaltracker
       return
     end
 
-    bug_db[project_name][ticket_id] = [title, url]
+    bug_db[project_name][ticket_id] = {:title=>title, :note=>url, :defer_date=>defer, :due_date=>due}
   end
 end
