@@ -48,8 +48,7 @@ module OmniFocus::Pivotaltracker
   end
 
   def fetch_projects(token)
-    url = "https://www.pivotaltracker.com/services/v5/projects"
-    JSON.parse(open(url, "X-TrackerToken" => token).read)
+    JSON.parse(open("https://www.pivotaltracker.com/services/v5/projects", "X-TrackerToken" => token).read)
   end
 
   def fetch_stories(token, project_id, user_name)
