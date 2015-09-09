@@ -78,7 +78,7 @@ module OmniFocus::Pivotaltracker
       .reduce({}) {|memo, obj| memo.merge obj}
   end
 
-  def process_story(project, story, defer, due)
+  def process_story(project, story, defer, due, estimated_minutes)
     number       = story["id"]
     url          = story["url"]
     project_name = project["name"]
