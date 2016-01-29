@@ -60,9 +60,15 @@ module OmniFocus::Pivotaltracker
   end
 
   def fetch_iterations(token, project_id)
-    url = "https://www.pivotaltracker.com/services/v5/projects/#{project_id}/iterations"
-
-    JSON.parse(open(url, "X-TrackerToken" => token).read)
+    iterations = []
+    loop do
+        url = "https://www.pivotaltracker.com/services/v5/projects/#{project_id}/iterations?limit=10&offset=#{iterations.length}"
+        response = open(url, "X-TrackerToken" => token)
+        iterations.push(JSON.parse(response.read)).flatten!
+        count = response.meta['x-tracker-pagination-total'].to_i
+        break if count == iterations.length
+    end
+    iterations
   end
 
   def ticket_dates(iteration)
