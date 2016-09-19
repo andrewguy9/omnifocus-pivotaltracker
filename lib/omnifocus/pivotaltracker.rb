@@ -96,6 +96,8 @@ module OmniFocus::Pivotaltracker
       return
     end
 
-    bug_db[project_name][ticket_id] = {:title=>title, :note=>url, :defer_date=>defer, :due_date=>due, :estimated_minutes=>estimated_minutes}
+    story = {:title=>title, :note=>url, :defer_date=>defer, :due_date=>due, :estimated_minutes=>estimated_minutes}
+    story.delete_if {|k,v| v.nil?} # Remove metadata which was unset.
+    bug_db[project_name][ticket_id] = story
   end
 end
